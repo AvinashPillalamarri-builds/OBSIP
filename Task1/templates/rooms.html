@@ -1,1 +1,521 @@
+{% extends 'base.html' %}
 
+{% block title %}Chat Rooms — ChatSphere{% endblock %}
+
+{% block page_css %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rooms.css') }}">
+
+{% endblock %}
+
+{% block body_class %}rooms-page{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+    <!-- Top Navigation Bar -->
+
+    <header class="top-nav">
+
+        <div class="brand-title">
+
+            <i class="fa-solid fa-sparkles text-gradient"></i>
+
+            <span>Chat<strong class="text-gradient">Sphere</strong></span>
+
+        </div>
+
+        <div class="user-profile-menu">
+
+            <!-- Clickable User Profile Area -->
+
+            <a href="{{ url_for('profile') }}" class="user-profile-link" title="View Profile ({{ username }})" tabindex="0" aria-label="View Profile">
+
+                {% if user_profile_picture %}
+
+                    <img src="{{ user_profile_picture }}" alt="{{ username }}" class="avatar-badge-img">
+
+                {% else %}
+
+                    <div class="avatar-badge">
+
+                        {{ username[0].upper() }}
+
+                    </div>
+
+                {% endif %}
+
+                <div class="user-meta">
+
+                    <span class="user-name">{{ username }}</span>
+
+                    <span class="user-status"><i class="fa-solid fa-circle" style="font-size: 0.55rem;"></i> Online</span>
+
+                </div>
+
+            </a>
+
+            <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">
+
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+
+            </a>
+
+        </div>
+
+    </header>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-header-bar">
+
+            <div class="dashboard-title-area">
+
+                <h2>Welcome to ChatSphere</h2>
+
+                <p>Join password-protected rooms, scan QR invitations, or create a community!</p>
+
+            </div>
+
+            <div class="dashboard-actions">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input type="text" id="room-search-input" class="search-input" placeholder="Search rooms..." autocomplete="off">
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Hero Actions Bar -->
+
+        <div class="rooms-hero-actions">
+
+            <div class="hero-action-card" onclick="startQRScanner()">
+
+                <div class="hero-card-icon">
+
+                    <i class="fa-solid fa-camera-retro"></i>
+
+                </div>
+
+                <div class="hero-card-content">
+
+                    <h3>📷 Scan QR Code</h3>
+
+                    <p>Point camera at a ChatSphere QR invite to join instantly</p>
+
+                </div>
+
+            </div>
+
+            <div class="hero-action-card" onclick="document.getElementById('create-room-modal').style.display='flex'">
+
+                <div class="hero-card-icon">
+
+                    <i class="fa-solid fa-plus-circle"></i>
+
+                </div>
+
+                <div class="hero-card-content">
+
+                    <h3>➕ Create Room</h3>
+
+                    <p>Set up a password-protected chat room with QR invitations</p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Rooms Grid -->
+
+        <div class="rooms-grid" id="rooms-grid">
+
+            {% for room in rooms %}
+
+                {% set is_owner = room.created_by == username %}
+
+                {% set is_unlocked = (room.id in unlocked_rooms) or is_owner or not room.password_hash %}
+
+                <div class="room-card" data-room-name="{{ room.name.lower() }}">
+
+                    <div class="room-card-header">
+
+                        <div class="room-icon-badge">
+
+                            <i class="fa-solid fa-hashtag"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h3>{{ room.name }}</h3>
+
+                            {% if room.password_hash %}
+
+                                <span class="room-badge-lock"><i class="fa-solid fa-lock"></i> Private</span>
+
+                            {% else %}
+
+                                <span class="room-badge-public"><i class="fa-solid fa-globe"></i> Public</span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                    <div class="room-card-meta">
+
+                        <span><i class="fa-solid fa-user-pen"></i> Created by: {{ room.created_by }}</span>
+
+                        <span><i class="fa-solid fa-message"></i> Messages: {{ room.message_count }}</span>
+
+                    </div>
+
+                    <div class="room-card-footer">
+
+                        {% if is_unlocked %}
+
+                            <a href="{{ url_for('chat_room', room_id=room.id) }}" class="btn btn-primary btn-block">
+
+                                <span>Enter Room</span>
+
+                                <i class="fa-solid fa-door-open"></i>
+
+                            </a>
+
+                        {% else %}
+
+                            <button type="button" class="btn btn-secondary btn-block" onclick="promptRoomPassword({{ room.id }}, '{{ room.name }}')">
+
+                                🔒 Unlock *&* Join
+
+                            </button>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </main>
+
+    <!-- Create Room Modal with Room Password -->
+
+    <div class="modal-backdrop" id="create-room-modal" style="display: none;">
+
+        <div class="modal-card">
+
+            <div class="modal-header">
+
+                <h3><i class="fa-solid fa-plus-circle text-gradient"></i> Create Protected Room</h3>
+
+                <button class="modal-close" onclick="document.getElementById('create-room-modal').style.display='none'">&times;</button>
+
+            </div>
+
+            <form action="{{ url_for('create_room_route') }}" method="POST" class="modal-form">
+
+                <div class="form-group">
+
+                    <label for="room_name">Room Name</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-hashtag input-icon"></i>
+
+                        <input type="text" id="room_name" name="room_name" class="form-control" placeholder="e.g. Python Developers" required minlength="2" maxlength="30">
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="room_password">Room Password</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-lock input-icon"></i>
+
+                        <input type="password" id="room_password" name="room_password" class="form-control" placeholder="Create room password (min 4 chars)" required minlength="4">
+
+                        <button type="button" class="password-toggle-btn" id="toggle-room-pwd-btn">
+
+                            <i class="fa-solid fa-eye" id="toggle-room-pwd-icon"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="confirm_password">Confirm Password</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-shield-check input-icon"></i>
+
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-enter room password" required>
+
+                        <button type="button" class="password-toggle-btn" id="toggle-room-confirm-btn">
+
+                            <i class="fa-solid fa-eye" id="toggle-room-confirm-icon"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-actions">
+
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('create-room-modal').style.display='none'">Cancel</button>
+
+                    <button type="submit" class="btn btn-primary">Create Room</button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- Password Verification Prompt Modal -->
+
+    <div class="modal-backdrop" id="verify-password-modal" style="display: none;">
+
+        <div class="modal-card">
+
+            <div class="password-prompt-icon">
+
+                <i class="fa-solid fa-lock"></i>
+
+            </div>
+
+            <div class="modal-header" style="justify-content: center; text-align: center; margin-bottom: 12px;">
+
+                <div>
+
+                    <h3 id="verify-room-title">Private Room</h3>
+
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">This room requires a password to enter.</p>
+
+                </div>
+
+            </div>
+
+            <form onsubmit="event.preventDefault(); submitRoomPasswordVerify();" class="modal-form">
+
+                <div class="form-group">
+
+                    <label for="verify-room-password-input">Room Password</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-key input-icon"></i>
+
+                        <input type="password" id="verify-room-password-input" class="form-control" placeholder="Enter room password" required autofocus>
+
+                        <button type="button" class="password-toggle-btn" id="toggle-verify-pwd-btn">
+
+                            <i class="fa-solid fa-eye" id="toggle-verify-pwd-icon"></i>
+
+                        </button>
+
+                    </div>
+
+                    <div class="verify-error-msg" id="verify-error-msg">Incorrect room password.</div>
+
+                </div>
+
+                <div class="modal-actions">
+
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('verify-password-modal').style.display='none'">Cancel</button>
+
+                    <button type="submit" class="btn btn-primary" id="verify-password-submit-btn">Unlock *&* Join</button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- Camera QR Scanner Modal -->
+
+    <div class="modal-backdrop" id="qr-scanner-modal" style="display: none;">
+
+        <div class="modal-card" style="max-width: 420px;">
+
+            <div class="modal-header">
+
+                <h3><i class="fa-solid fa-camera-retro text-gradient"></i> Scan Room QR Code</h3>
+
+                <button class="modal-close" onclick="stopQRScanner()">&times;</button>
+
+            </div>
+
+            <div class="qr-scanner-container">
+
+                <div class="qr-viewport">
+
+                    <div id="qr-reader"></div>
+
+                </div>
+
+                <p class="scanner-hint">Point your camera at a ChatSphere room QR invitation</p>
+
+                <div class="scanner-error-box" id="scanner-error-box" style="display: none;"></div>
+
+            </div>
+
+            <div class="modal-actions" style="margin-top: 16px;">
+
+                <button type="button" class="btn btn-secondary btn-block" onclick="stopQRScanner()">Cancel Scanner</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- QR Scan Result Preview Modal -->
+
+    <div class="modal-backdrop" id="qr-result-modal" style="display: none;">
+
+        <div class="modal-card">
+
+            <div class="password-prompt-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary-accent);">
+
+                <i class="fa-solid fa-qrcode"></i>
+
+            </div>
+
+            <div class="modal-header" style="justify-content: center; text-align: center; margin-bottom: 16px;">
+
+                <div>
+
+                    <h3 id="qr-result-room-name">Room Found</h3>
+
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Created by <span id="qr-result-creator">@User</span></p>
+
+                </div>
+
+            </div>
+
+            <div style="background: var(--bg-dark); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem; text-align: center; color: var(--text-secondary); margin-bottom: 20px;">
+
+                <i class="fa-solid fa-shield-halved text-gradient"></i> 🔒 Password Protected Room. Entering requires room password.
+
+            </div>
+
+            <div class="modal-actions">
+
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('qr-result-modal').style.display='none'">Cancel</button>
+
+                <button type="button" class="btn btn-primary" onclick="continueFromScanPreview()">Continue to Password</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Invalid QR Modal -->
+
+    <div class="modal-backdrop" id="invalid-qr-modal" style="display: none;">
+
+        <div class="modal-card">
+
+            <div class="password-prompt-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--danger);">
+
+                <i class="fa-solid fa-circle-xmark"></i>
+
+            </div>
+
+            <div class="modal-header" style="justify-content: center; text-align: center; margin-bottom: 16px;">
+
+                <div>
+
+                    <h3>Invalid QR Code</h3>
+
+                    <p id="invalid-qr-reason" style="font-size: 0.85rem; color: var(--text-secondary);">This QR code is not a valid ChatSphere room invitation.</p>
+
+                </div>
+
+            </div>
+
+            <div class="modal-actions">
+
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('invalid-qr-modal').style.display='none'">Close</button>
+
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('invalid-qr-modal').style.display='none'; startQRScanner();">Scan Again</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const searchInput = document.getElementById('room-search-input');
+
+        const roomCards = document.querySelectorAll('.room-card');
+
+        if (searchInput) {
+
+            searchInput.addEventListener('input', (e) => {
+
+                const term = e.target.value.toLowerCase().trim();
+
+                roomCards.forEach(card => {
+
+                    const roomName = card.getAttribute('data-room-name') || '';
+
+                    if (roomName.includes(term)) {
+
+                        card.style.display = 'flex';
+
+                    } else {
+
+                        card.style.display = 'none';
+
+                    }
+
+                });
+
+            });
+
+        }
+
+    });
+
+</script>
+
+{% endblock %}
