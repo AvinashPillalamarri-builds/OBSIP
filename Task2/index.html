@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecurePass — Random Password Generator</title>
+  <meta name="description" content="Production-quality cryptographically secure password generator using Web Crypto API.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="background-grid"></div>
+  <div class="app-container">
+    
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="brand-logo">
+        <svg class="shield-icon" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 4 L56 12 V28 C56 44 32 58 32 58 C32 58 8 44 8 28 V12 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+          <rect x="22" y="26" width="20" height="16" rx="3" fill="currentColor"/>
+          <path d="M25 26 V20 C25 16.1 28.1 13 32 13 C35.9 13 39 16.1 39 20 V26" fill="none" stroke="currentColor" stroke-width="3"/>
+        </svg>
+        <h1 class="brand-title">SecurePass</h1>
+      </div>
+      <p class="brand-subtitle">Secure Random Password Generator</p>
+      <div class="security-badge" aria-label="Security Assurance">
+        <span class="badge-icon">🔒</span>
+        <span class="badge-text">Cryptographically Secure</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- CENTRAL GENERATOR CARD -->
+      <section class="generator-card" aria-labelledby="generator-heading">
+        <h2 id="generator-heading" class="sr-only">Password Generator</h2>
+        
+        <!-- PASSWORD DISPLAY AREA -->
+        <div class="display-container">
+          <div class="password-field-wrapper">
+            <input type="text" id="passwordOutput" class="password-display" readonly aria-label="Generated Password" placeholder="Click Generate Password..." value="">
+            <button type="button" id="toggleVisibilityBtn" class="icon-btn" title="Toggle Visibility" aria-label="Toggle password visibility">
+              <span id="visibilityIcon">👁️</span>
+            </button>
+          </div>
+          <div class="action-buttons-row">
+            <button type="button" id="copyBtn" class="btn btn-primary btn-copy" title="Copy password to clipboard">
+              <span class="btn-icon" id="copyIcon">📋</span>
+              <span id="copyBtnText">Copy to Clipboard</span>
+            </button>
+            <button type="button" id="generateBtn" class="btn btn-accent btn-generate" title="Generate new password">
+              <span class="btn-icon">🔐</span>
+              <span>Generate Password</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- VALIDATION ERROR ALERT -->
+        <div id="validationAlert" class="alert alert-danger hidden" role="alert" aria-live="assertive">
+          <span class="alert-icon">⚠️</span>
+          <span id="validationMessage">Please select at least two character types.</span>
+        </div>
+
+        <!-- STRENGTH INDICATOR -->
+        <div class="strength-container" aria-live="polite">
+          <div class="strength-header">
+            <span class="strength-title">Password Strength:</span>
+            <span id="strengthLabel" class="strength-badge strength-strong">Strong</span>
+          </div>
+          <div class="strength-meter-bar" aria-hidden="true">
+            <div id="strengthMeterFill" class="meter-fill fill-strong" style="width: 100%;"></div>
+          </div>
+          <p class="strength-note">Calculated using length and entropy estimate. Local browser analysis only.</p>
+        </div>
+
+        <hr class="divider">
+
+        <!-- CONTROLS & OPTIONS FORM -->
+        <form class="options-form" id="generatorForm" onsubmit="return false;">
+          
+          <!-- LENGTH CONTROL -->
+          <div class="control-group">
+            <div class="label-row">
+              <label for="lengthSlider" id="lengthLabel">Password Length</label>
+              <div class="length-spinbox-wrapper">
+                <input type="number" id="lengthInput" min="8" max="64" value="16" aria-labelledby="lengthLabel" class="spinbox-input">
+                <span class="unit-text">chars</span>
+              </div>
+            </div>
+            <div class="slider-wrapper">
+              <span class="range-bound">8</span>
+              <input type="range" id="lengthSlider" min="8" max="64" value="16" step="1" aria-labelledby="lengthLabel" class="range-slider">
+              <span class="range-bound">64</span>
+            </div>
+          </div>
+
+          <!-- CHARACTER TYPE CHECKBOXES -->
+          <fieldset class="control-group checkboxes-fieldset">
+            <legend class="fieldset-legend">Character Types <span class="req-text">(Select at least 2)</span></legend>
+            <div class="checkbox-grid">
+              
+              <label class="checkbox-card">
+                <input type="checkbox" id="chkUpper" checked>
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label-text">
+                  <strong>Uppercase Letters</strong>
+                  <small class="char-sample">A-Z</small>
+                </span>
+              </label>
+
+              <label class="checkbox-card">
+                <input type="checkbox" id="chkLower" checked>
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label-text">
+                  <strong>Lowercase Letters</strong>
+                  <small class="char-sample">a-z</small>
+                </span>
+              </label>
+
+              <label class="checkbox-card">
+                <input type="checkbox" id="chkNumbers" checked>
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label-text">
+                  <strong>Numbers</strong>
+                  <small class="char-sample">0-9</small>
+                </span>
+              </label>
+
+              <label class="checkbox-card">
+                <input type="checkbox" id="chkSymbols" checked>
+                <span class="checkbox-custom"></span>
+                <span class="checkbox-label-text">
+                  <strong>Symbols</strong>
+                  <small class="char-sample">!@#$%^&amp;*()</small>
+                </span>
+              </label>
+
+            </div>
+          </fieldset>
+
+          <!-- EXCLUDE AMBIGUOUS OPTION -->
+          <div class="control-group">
+            <label class="checkbox-card full-width-card">
+              <input type="checkbox" id="chkExcludeAmbiguous">
+              <span class="checkbox-custom"></span>
+              <span class="checkbox-label-text">
+                <strong>Exclude Ambiguous Characters</strong>
+                <small class="char-sample">Excludes: 0, O, o, 1, l, I</small>
+              </span>
+            </label>
+          </div>
+
+          <!-- RESET SETTINGS BUTTON -->
+          <div class="form-actions">
+            <button type="button" id="resetBtn" class="btn btn-secondary btn-reset" title="Reset all options to default">
+              <span>🔄 Reset Settings</span>
+            </button>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- HISTORY SECTION -->
+      <section class="card history-card" aria-labelledby="history-heading">
+        <div class="history-header">
+          <h2 id="history-heading" class="card-title">
+            <span>⏱️ Recent Passwords</span>
+            <span class="history-subtitle">(Session only — Last 5)</span>
+          </h2>
+          <button type="button" id="clearHistoryBtn" class="btn btn-sm btn-ghost" title="Clear session password history">
+            🗑️ Clear History
+          </button>
+        </div>
+
+        <div id="historyEmpty" class="history-empty">
+          <p>No passwords generated in this session yet.</p>
+        </div>
+
+        <ul id="historyList" class="history-list hidden" aria-live="polite">
+          <!-- History items will be dynamically injected here -->
+        </ul>
+      </section>
+
+      <!-- SECURITY & PRIVACY SECTION -->
+      <section class="card security-info-card" aria-labelledby="security-heading">
+        <h2 id="security-heading" class="card-title">🛡️ Security &amp; Privacy</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-icon">⚡</div>
+            <div class="info-body">
+              <h3>Secure Generation</h3>
+              <p>Passwords are generated locally using the Web Crypto API with cryptographically secure random values.</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-icon">💻</div>
+            <div class="info-body">
+              <h3>Client-Side Privacy</h3>
+              <p>Password generation happens directly in your browser without a backend password service.</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-icon">🧹</div>
+            <div class="info-body">
+              <h3>Zero Persistence</h3>
+              <p>Generated passwords and history are kept only for the current session and are not permanently stored.</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-icon">📊</div>
+            <div class="info-body">
+              <h3>Strength Estimation</h3>
+              <p>A visual strength indicator evaluates password length and character diversity.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="privacy-note">
+          <span class="privacy-note-icon">🛡️</span>
+          <p><strong>Privacy First:</strong> SecurePass does not intentionally transmit or permanently store generated passwords.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <p>SecurePass &copy; 2026 — Cryptographically Secure Password Generator</p>
+      <p class="footer-subtext">Built for Internship Task 3 — Random Password Generator</p>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
