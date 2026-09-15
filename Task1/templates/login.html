@@ -1,1 +1,186 @@
 
+{% extends 'base.html' %}
+
+{% block title %}Sign In — ChatSphere{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block body_class %}login-page{% endblock %}
+
+{% block content %}
+
+<div class="auth-wrapper">
+
+    <div class="auth-card">
+
+        <!-- Header -->
+        <div class="auth-header">
+
+            <div class="auth-logo-badge">
+                <i class="fa-solid fa-sparkles"></i>
+            </div>
+
+            <h1 class="brand-title">
+                <span>Chat<strong class="text-gradient">Sphere</strong></span>
+            </h1>
+
+            <p class="tagline">
+                Connect. Chat. Collaborate.
+            </p>
+
+            <h2>Welcome Back</h2>
+
+        </div>
+
+        <!-- Login Form -->
+        <form
+            action="{{ url_for('login') }}"
+            method="POST"
+            class="auth-form"
+            id="login-form"
+        >
+
+            <!-- Username -->
+            <div class="form-group">
+
+                <label for="username">
+                    Username
+                </label>
+
+                <div class="input-wrapper">
+
+                    <i class="fa-solid fa-user input-icon"></i>
+
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="form-control"
+                        placeholder="Enter your username"
+                        required
+                        autofocus
+                        autocomplete="username"
+                    >
+
+                </div>
+
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+
+                <label for="password">
+                    Password
+                </label>
+
+                <div class="input-wrapper">
+
+                    <i class="fa-solid fa-lock input-icon"></i>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-control"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+
+                    <button
+                        type="button"
+                        class="password-toggle-btn"
+                        id="toggle-password-btn"
+                        title="Toggle password visibility"
+                    >
+                        <i
+                            class="fa-solid fa-eye"
+                            id="toggle-password-icon"
+                        ></i>
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- Submit -->
+            <button
+                type="submit"
+                class="btn btn-primary btn-block"
+                id="login-submit-btn"
+            >
+                <span>Sign In</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+        </form>
+
+        <!-- Register -->
+        <div class="auth-footer">
+
+            <p>
+                Don't have an account?
+                <a href="{{ url_for('register') }}">
+                    Create Account
+                </a>
+            </p>
+
+        </div>
+
+        <!-- Security -->
+        <div class="security-badge">
+
+            <i class="fa-solid fa-shield-halved text-gradient"></i>
+
+            Protected with Werkzeug Password Hashing
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const toggleBtn =
+        document.getElementById('toggle-password-btn');
+
+    const passwordInput =
+        document.getElementById('password');
+
+    const toggleIcon =
+        document.getElementById('toggle-password-icon');
+
+    if (toggleBtn && passwordInput && toggleIcon) {
+
+        toggleBtn.addEventListener('click', () => {
+
+            const isPassword =
+                passwordInput.type === 'password';
+
+            passwordInput.type =
+                isPassword ? 'text' : 'password';
+
+            toggleIcon.className =
+                isPassword
+                    ? 'fa-solid fa-eye-slash'
+                    : 'fa-solid fa-eye';
+
+        });
+
+    }
+
+});
+
+</script>
+
+{% endblock %}
