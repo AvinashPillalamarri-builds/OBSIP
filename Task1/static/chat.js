@@ -1,1 +1,600 @@
 // Task 1 static JavaScript
+{% extends 'base.html' %}
+
+{% block title %}#{{ room.name }} — ChatSphere{% endblock %}
+
+{% block page_css %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+
+{% endblock %}
+
+{% block body_class %}chat-page{% endblock %}
+
+{% block content %}
+
+<div class="chat-app-layout">
+
+    <!-- Panel 1: Left Sidebar -->
+
+    <aside class="chat-sidebar" id="chat-sidebar">
+
+        <div class="sidebar-header">
+
+            <div class="brand-title">
+
+                <i class="fa-solid fa-sparkles text-gradient"></i>
+
+                <span>Chat<strong class="text-gradient">Sphere</strong></span>
+
+            </div>
+
+            <button class="sidebar-close-btn" id="sidebar-close-btn">&times;</button>
+
+        </div>
+
+        <div class="sidebar-search-box">
+
+            <div class="search-box">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input type="text" id="sidebar-search-input" class="search-input" placeholder="Search rooms..." autocomplete="off">
+
+            </div>
+
+        </div>
+
+        <div class="sidebar-section">
+
+            <div class="section-title">
+
+                <span>Rooms</span>
+
+                <button class="icon-btn-sm" title="Create Room" onclick="document.getElementById('create-room-modal').style.display='flex'">
+
+                    <i class="fa-solid fa-plus"></i>
+
+                </button>
+
+            </div>
+
+            <ul class="room-list" id="sidebar-room-list">
+
+                {% for r in rooms %}
+
+                    <li class="room-item {% if r.id == room.id %}active{% endif %}" data-room-name="{{ r.name.lower() }}">
+
+                        <a href="{{ url_for('chat_room', room_id=r.id) }}">
+
+                            <i class="fa-solid fa-hashtag"></i>
+
+                            <span class="room-item-name">{{ r.name }}</span>
+
+                            {% if r.password_hash %}
+
+                                <i class="fa-solid fa-lock" style="font-size: 0.7rem; margin-left: auto; color: var(--warning);"></i>
+
+                            {% endif %}
+
+                        </a>
+
+                    </li>
+
+                {% endfor %}
+
+            </ul>
+
+        </div>
+
+        <div class="user-profile-footer">
+
+            <!-- Clickable User Profile Area -->
+
+            <a href="{{ url_for('profile') }}" class="user-profile-link" title="View Profile ({{ username }})" tabindex="0" aria-label="View Profile">
+
+                {% if user_profile_picture %}
+
+                    <img src="{{ user_profile_picture }}" alt="{{ username }}" class="avatar-badge-img">
+
+                {% else %}
+
+                    <div class="avatar-badge">
+
+                        {{ username[0].upper() }}
+
+                    </div>
+
+                {% endif %}
+
+                <div class="user-meta">
+
+                    <span class="user-name">{{ username }}</span>
+
+                    <span class="user-status"><i class="fa-solid fa-circle" style="font-size: 0.55rem;"></i> Online</span>
+
+                </div>
+
+            </a>
+
+            <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm" title="Logout">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+            </a>
+
+        </div>
+
+    </aside>
+
+    <!-- Panel 2: Center Chat Workspace -->
+
+    <section class="chat-workspace">
+
+        <!-- Top Chat Header -->
+
+        <header class="chat-header">
+
+            <div class="chat-header-left">
+
+                <button class="mobile-toggle-btn" id="mobile-menu-btn" title="Toggle Rooms Sidebar">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+                <div class="room-title-info">
+
+                    <h2>
+
+                        <i class="fa-solid fa-hashtag text-gradient"></i>
+
+                        <span>{{ room.name }}</span>
+
+                        {% if room.password_hash %}
+
+                            <i class="fa-solid fa-lock" style="font-size: 0.85rem; color: var(--warning);" title="Password Protected Room"></i>
+
+                        {% endif %}
+
+                    </h2>
+
+                    <span class="member-count-badge" id="header-member-count">1 member online</span>
+
+                </div>
+
+            </div>
+
+            <div class="chat-header-right">
+
+                <button class="btn btn-secondary btn-sm" onclick="showRoomInviteModal('{{ invite_url }}', '{{ room.name }}')" title="Invite to Room via QR">
+
+                    <i class="fa-solid fa-qrcode text-gradient"></i> Invite QR
+
+                </button>
+
+                {% if room.created_by == username %}
+
+                    <button class="btn btn-icon" onclick="document.getElementById('owner-settings-modal').style.display='flex'" title="Room Owner Settings">
+
+                        <i class="fa-solid fa-gear"></i>
+
+                    </button>
+
+                {% endif %}
+
+                <button class="btn btn-icon" id="notification-btn" title="Enable Desktop Notifications">
+
+                    <i class="fa-regular fa-bell" id="notification-icon"></i>
+
+                </button>
+
+                <button class="mobile-toggle-btn" id="mobile-members-btn" title="Toggle Online Members">
+
+                    <i class="fa-solid fa-users"></i>
+
+                </button>
+
+                <a href="{{ url_for('rooms_list') }}" class="btn btn-secondary btn-sm">
+
+                    <i class="fa-solid fa-arrow-left"></i> Rooms
+
+                </a>
+
+            </div>
+
+        </header>
+
+        <!-- Message Log Feed -->
+
+        <div class="chat-messages" id="chat-messages">
+
+            <div class="history-divider">
+
+                <span>Message History</span>
+
+            </div>
+
+            <!-- Dynamic Messages populated via Socket.IO JS -->
+
+        </div>
+
+        <!-- Quick Emoji Bar -->
+
+        <div class="emoji-bar">
+
+            <span class="emoji-bar-label">Shortcodes:</span>
+
+            <button type="button" class="emoji-btn" data-shortcode=":smile:">😄</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":heart:">❤️</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":thumbsup:">👍</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":thumbsdown:">👎</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":fire:">🔥</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":joy:">😂</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":cry:">😢</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":angry:">😠</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":ok_hand:">👌</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":clap:">👏</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":rocket:">🚀</button>
+
+            <button type="button" class="emoji-btn" data-shortcode=":star:">⭐</button>
+
+        </div>
+
+        <!-- Fixed Composer Input Area -->
+
+        <div class="chat-input-area">
+
+            <form id="message-form" class="composer-form">
+
+                <button type="button" class="composer-btn-attachment" title="Attachment Placeholder (Decorative)">
+
+                    <i class="fa-solid fa-paperclip"></i>
+
+                </button>
+
+                <textarea id="message-input" class="composer-textarea" placeholder="Type a message... (Press Enter to send, Shift+Enter for newline)" rows="1" required></textarea>
+
+                <button type="submit" class="btn btn-primary composer-btn-send" title="Send Message">
+
+                    <span>Send</span>
+
+                    <i class="fa-solid fa-paper-plane"></i>
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+    <!-- Panel 3: Right Members Panel -->
+
+    <aside class="members-panel" id="members-panel">
+
+        <div class="members-header">
+
+            <span>Members (<span id="members-count">0</span>)</span>
+
+            <button class="members-close-btn" id="members-close-btn">&times;</button>
+
+        </div>
+
+        <ul class="members-list" id="members-list">
+
+            <li class="member-item">
+
+                <div class="status-dot-online"></div>
+
+                <div class="member-avatar">{{ username[0].upper() }}</div>
+
+                <span>{{ username }}</span>
+
+            </li>
+
+        </ul>
+
+    </aside>
+
+    <!-- QR Invite Display Modal -->
+
+    <div class="modal-backdrop" id="qr-invite-modal" style="display: none;">
+
+        <div class="modal-card">
+
+            <div class="modal-header">
+
+                <h3><i class="fa-solid fa-qrcode text-gradient"></i> Invite to <span id="invite-modal-room-name">Room</span></h3>
+
+                <button class="modal-close" onclick="document.getElementById('qr-invite-modal').style.display='none'">&times;</button>
+
+            </div>
+
+            <div class="qr-display-wrapper">
+
+                <div class="qrcode-box" id="qrcode-display-box"></div>
+
+                <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
+
+                    Scan this QR code to request entry. 🔒 Password required to join.
+
+                </p>
+
+                <div class="invite-link-group">
+
+                    <input type="text" id="invite-url-input" class="form-control" readonly>
+
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('invite-url-input').value); alert('Invite link copied to clipboard!');">Copy</button>
+
+                </div>
+
+            </div>
+
+            <div class="modal-actions" style="margin-top: 14px; justify-content: space-between;">
+
+                {% if room.created_by == username %}
+
+                    <button type="button" class="btn btn-outline btn-sm" onclick="regenerateInvite({{ room.id }})">
+
+                        <i class="fa-solid fa-rotate"></i> Regenerate QR
+
+                    </button>
+
+                {% else %}
+
+                    <div></div>
+
+                {% endif %}
+
+                <button type="button" class="btn btn-primary" onclick="downloadQRImage()">
+
+                    <i class="fa-solid fa-download"></i> Download QR
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Room Owner Settings Modal -->
+
+    {% if room.created_by == username %}
+
+    <div class="modal-backdrop" id="owner-settings-modal" style="display: none;">
+
+        <div class="modal-card">
+
+            <div class="modal-header">
+
+                <h3><i class="fa-solid fa-gear text-gradient"></i> Room Owner Settings</h3>
+
+                <button class="modal-close" onclick="document.getElementById('owner-settings-modal').style.display='none'">&times;</button>
+
+            </div>
+
+            <form onsubmit="event.preventDefault(); submitChangeRoomPassword({{ room.id }});" class="modal-form">
+
+                <div class="form-group">
+
+                    <label for="owner-new-password">New Room Password</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-key input-icon"></i>
+
+                        <input type="password" id="owner-new-password" class="form-control" placeholder="Enter new room password" required minlength="4">
+
+                        <button type="button" class="password-toggle-btn" id="toggle-owner-pwd1-btn">
+
+                            <i class="fa-solid fa-eye" id="toggle-owner-pwd1-icon"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="owner-confirm-password">Confirm New Password</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-shield-check input-icon"></i>
+
+                        <input type="password" id="owner-confirm-password" class="form-control" placeholder="Confirm new room password" required minlength="4">
+
+                        <button type="button" class="password-toggle-btn" id="toggle-owner-pwd2-btn">
+
+                            <i class="fa-solid fa-eye" id="toggle-owner-pwd2-icon"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary);">
+
+                    <input type="checkbox" id="owner-regenerate-token-check">
+
+                    <label for="owner-regenerate-token-check">Also invalidate old QR code &amp; generate new invitation</label>
+
+                </div>
+
+                <div class="modal-actions" style="margin-top: 10px;">
+
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('owner-settings-modal').style.display='none'">Cancel</button>
+
+                    <button type="submit" class="btn btn-primary">Update Settings</button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        async function submitChangeRoomPassword(roomId) {
+
+            const newPwd = document.getElementById('owner-new-password').value;
+
+            const confirmPwd = document.getElementById('owner-confirm-password').value;
+
+            const regen = document.getElementById('owner-regenerate-token-check').checked;
+
+            try {
+
+                const res = await fetch(`/rooms/${roomId}/change-password`, {
+
+                    method: 'POST',
+
+                    headers: { 'Content-Type': 'application/json' },
+
+                    body: JSON.stringify({
+
+                        new_password: newPwd,
+
+                        confirm_password: confirmPwd,
+
+                        regenerate_invite: regen
+
+                    })
+
+                });
+
+                const data = await res.json();
+
+                alert(data.message);
+
+                if (data.success) {
+
+                    document.getElementById('owner-settings-modal').style.display = 'none';
+
+                }
+
+            } catch(e) {
+
+                alert('Error updating room password.');
+
+            }
+
+        }
+
+    </script>
+
+    {% endif %}
+
+    <!-- Create Room Modal inside Chat UI -->
+
+    <div class="modal-backdrop" id="create-room-modal" style="display: none;">
+
+        <div class="modal-card">
+
+            <div class="modal-header">
+
+                <h3><i class="fa-solid fa-plus-circle text-gradient"></i> Create Protected Room</h3>
+
+                <button class="modal-close" onclick="document.getElementById('create-room-modal').style.display='none'">&times;</button>
+
+            </div>
+
+            <form action="{{ url_for('create_room_route') }}" method="POST" class="modal-form">
+
+                <div class="form-group">
+
+                    <label for="room_name">Room Name</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-hashtag input-icon"></i>
+
+                        <input type="text" id="room_name" name="room_name" class="form-control" placeholder="e.g. Python Developers" required minlength="2" maxlength="30">
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="room_password">Room Password</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-lock input-icon"></i>
+
+                        <input type="password" id="room_password" name="room_password" class="form-control" placeholder="Create room password (min 4 chars)" required minlength="4">
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="confirm_password">Confirm Password</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-shield-check input-icon"></i>
+
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-enter room password" required>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-actions">
+
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('create-room-modal').style.display='none'">Cancel</button>
+
+                    <button type="submit" class="btn btn-primary">Create Room</button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Socket.IO CDN -->
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<!-- Hidden Context Variables for JS -->
+
+<script>
+
+    const CURRENT_USER = "{{ username }}";
+
+    const CURRENT_ROOM_ID = {{ room.id }};
+
+    const CURRENT_ROOM_NAME = "{{ room.name }}";
+
+</script>
+
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+
+{% endblock %}
