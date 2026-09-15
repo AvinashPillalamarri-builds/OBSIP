@@ -1,1 +1,112 @@
 <!-- Task 1 templates -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}ChatSphere — Connect. Chat. Collaborate.{% endblock %}</title>
+
+    <!-- Official ChatSphere Favicon -->
+    <link rel="icon" type="image/png"
+          href="{{ url_for('static', filename='images/chatsphere-icon.png') }}">
+
+    <link rel="shortcut icon"
+          href="{{ url_for('static', filename='images/favicon.ico') }}">
+
+    <link rel="apple-touch-icon"
+          href="{{ url_for('static', filename='images/chatsphere-icon.png') }}">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Global Base CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/base.css') }}">
+
+    <!-- QR & Password Security CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/qr.css') }}">
+
+    <!-- Page Specific CSS -->
+    {% block page_css %}{% endblock %}
+
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+
+    <div class="app-container">
+
+        <!-- Global Flash / Toast Alert Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+
+            {% if messages %}
+
+                <div class="flash-messages-container" id="flash-container">
+
+                    {% for category, message in messages %}
+
+                        <div class="flash-message flash-{{ category }}">
+
+                            <span class="flash-icon">
+
+                                {% if category == 'error' %}
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+
+                                {% elif category == 'success' %}
+                                    <i class="fa-solid fa-circle-check"></i>
+
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info"></i>
+                                {% endif %}
+
+                            </span>
+
+                            <span class="flash-text">
+                                {{ message }}
+                            </span>
+
+                            <button class="flash-close"
+                                    onclick="this.parentElement.remove();">
+                                &times;
+                            </button>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        {% endwith %}
+
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+
+    </div>
+
+    <!-- Client QR Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Camera QR Scanner Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- QR & Password Logic -->
+    <script src="{{ url_for('static', filename='js/qr.js') }}"></script>
+
+    <!-- Page Specific JavaScript -->
+    {% block scripts %}{% endblock %}
+
+</body>
+
+</html>
