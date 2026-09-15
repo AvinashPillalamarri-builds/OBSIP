@@ -1,1 +1,358 @@
 
+{% extends 'base.html' %}
+
+{% block title %}Create Account — ChatSphere{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+{% endblock %}
+
+{% block body_class %}register-page{% endblock %}
+
+{% block content %}
+
+<div class="auth-wrapper">
+
+    <div class="auth-card">
+
+        <div class="auth-header">
+
+            <div class="auth-logo-badge">
+                <i class="fa-solid fa-user-plus"></i>
+            </div>
+
+            <h1 class="brand-title">
+                <span>
+                    Chat<strong class="text-gradient">Sphere</strong>
+                </span>
+            </h1>
+
+            <p class="tagline">
+                Connect. Chat. Collaborate.
+            </p>
+
+            <h2>Create Account</h2>
+
+        </div>
+
+        <form
+            action="{{ url_for('register') }}"
+            method="POST"
+            class="auth-form"
+            id="register-form"
+        >
+
+            <!-- Username -->
+            <div class="form-group">
+
+                <label for="username">
+                    Username
+                </label>
+
+                <div class="input-wrapper">
+
+                    <i class="fa-solid fa-user input-icon"></i>
+
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="form-control"
+                        placeholder="Choose a username (3-20 chars)"
+                        required
+                        autofocus
+                        autocomplete="username"
+                        minlength="3"
+                        maxlength="20"
+                    >
+
+                </div>
+
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+
+                <label for="password">
+                    Password
+                </label>
+
+                <div class="input-wrapper">
+
+                    <i class="fa-solid fa-lock input-icon"></i>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-control"
+                        placeholder="Create a strong password"
+                        required
+                        autocomplete="new-password"
+                        minlength="4"
+                    >
+
+                    <button
+                        type="button"
+                        class="password-toggle-btn"
+                        id="toggle-pwd1-btn"
+                        title="Toggle password visibility"
+                    >
+                        <i
+                            class="fa-solid fa-eye"
+                            id="toggle-pwd1-icon"
+                        ></i>
+                    </button>
+
+                </div>
+
+                <!-- Password Strength Meter -->
+                <div
+                    class="password-strength-container"
+                    id="strength-container"
+                    style="display: none;"
+                >
+
+                    <div class="strength-bar-track">
+                        <div
+                            class="strength-bar-fill"
+                            id="strength-bar"
+                        ></div>
+                    </div>
+
+                    <span
+                        class="strength-text"
+                        id="strength-label"
+                    >
+                        Password strength
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group">
+
+                <label for="confirm_password">
+                    Confirm Password
+                </label>
+
+                <div class="input-wrapper">
+
+                    <i class="fa-solid fa-shield-check input-icon"></i>
+
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        class="form-control"
+                        placeholder="Re-enter your password"
+                        required
+                        autocomplete="new-password"
+                    >
+
+                    <button
+                        type="button"
+                        class="password-toggle-btn"
+                        id="toggle-pwd2-btn"
+                        title="Toggle password visibility"
+                    >
+                        <i
+                            class="fa-solid fa-eye"
+                            id="toggle-pwd2-icon"
+                        ></i>
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- Create Account -->
+            <button
+                type="submit"
+                class="btn btn-primary btn-block"
+            >
+                <span>Create Account</span>
+                <i class="fa-solid fa-user-check"></i>
+            </button>
+
+        </form>
+
+        <!-- Login Link -->
+        <div class="auth-footer">
+
+            <p>
+                Already have an account?
+                <a href="{{ url_for('login') }}">
+                    Sign In
+                </a>
+            </p>
+
+        </div>
+
+        <!-- Security Badge -->
+        <div class="security-badge">
+
+            <i class="fa-solid fa-shield-halved text-gradient"></i>
+
+            Passwords salted &amp; hashed securely
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Password toggle function
+    const setupToggle = (btnId, inputId, iconId) => {
+
+        const btn = document.getElementById(btnId);
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+
+        if (btn && input && icon) {
+
+            btn.addEventListener('click', () => {
+
+                const isPwd = input.type === 'password';
+
+                input.type = isPwd ? 'text' : 'password';
+
+                icon.className = isPwd
+                    ? 'fa-solid fa-eye-slash'
+                    : 'fa-solid fa-eye';
+
+            });
+
+        }
+
+    };
+
+
+    // Password visibility
+    setupToggle(
+        'toggle-pwd1-btn',
+        'password',
+        'toggle-pwd1-icon'
+    );
+
+    setupToggle(
+        'toggle-pwd2-btn',
+        'confirm_password',
+        'toggle-pwd2-icon'
+    );
+
+
+    // Password strength meter
+    const pwdInput =
+        document.getElementById('password');
+
+    const strengthContainer =
+        document.getElementById('strength-container');
+
+    const strengthBar =
+        document.getElementById('strength-bar');
+
+    const strengthLabel =
+        document.getElementById('strength-label');
+
+
+    if (
+        pwdInput &&
+        strengthContainer &&
+        strengthBar &&
+        strengthLabel
+    ) {
+
+        pwdInput.addEventListener('input', () => {
+
+            const val = pwdInput.value;
+
+            if (!val) {
+
+                strengthContainer.style.display = 'none';
+
+                return;
+            }
+
+            strengthContainer.style.display = 'flex';
+
+            let score = 0;
+
+            if (val.length >= 4) {
+                score++;
+            }
+
+            if (val.length >= 8) {
+                score++;
+            }
+
+            if (
+                /[A-Z]/.test(val) &&
+                /[0-9]/.test(val)
+            ) {
+                score++;
+            }
+
+
+            strengthBar.className =
+                'strength-bar-fill';
+
+
+            if (score <= 1) {
+
+                strengthBar.classList.add(
+                    'strength-weak'
+                );
+
+                strengthLabel.textContent =
+                    'Strength: Weak';
+
+                strengthLabel.style.color =
+                    '#ef4444';
+
+            } else if (score === 2) {
+
+                strengthBar.classList.add(
+                    'strength-fair'
+                );
+
+                strengthLabel.textContent =
+                    'Strength: Fair';
+
+                strengthLabel.style.color =
+                    '#f59e0b';
+
+            } else {
+
+                strengthBar.classList.add(
+                    'strength-strong'
+                );
+
+                strengthLabel.textContent =
+                    'Strength: Strong';
+
+                strengthLabel.style.color =
+                    '#22c55e';
+
+            }
+
+        });
+
+    }
+
+});
+
+</script>
+
+{% endblock %}
