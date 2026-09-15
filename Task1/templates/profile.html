@@ -1,1 +1,433 @@
+{% extends 'base.html' %}
 
+{% block title %}My Profile — ChatSphere{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block body_class %}profile-page{% endblock %}
+
+{% block content %}
+
+<div class="profile-page-container">
+
+    <!-- Profile Header -->
+    <div class="profile-topbar">
+        <div class="profile-topbar-left">
+            <a href="{{ url_for('rooms') }}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Rooms
+            </a>
+
+            <div class="profile-page-title">
+                <i class="fa-solid fa-user-circle"></i>
+                <span>My Profile</span>
+            </div>
+        </div>
+
+        <a href="{{ url_for('logout') }}" class="btn btn-outline">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Logout
+        </a>
+    </div>
+
+
+    <!-- Profile Card -->
+    <div class="profile-content">
+
+        <div class="profile-card">
+
+            <!-- Profile Banner -->
+            <div class="profile-banner"></div>
+
+            <!-- Avatar Section -->
+            <div class="profile-avatar-section">
+
+                <div class="profile-avatar-wrapper">
+
+                    {% if user.get('profile_pic') %}
+                        <img
+                            src="{{ url_for('static', filename='uploads/profile_pics/' + user['profile_pic']) }}"
+                            alt="Profile Picture"
+                            class="profile-avatar"
+                            id="profile-avatar">
+                    {% else %}
+                        <div class="profile-avatar profile-avatar-placeholder" id="profile-avatar">
+                            {{ user.get('username', 'U')[0]|upper }}
+                        </div>
+                    {% endif %}
+
+                    <label for="avatar-upload" class="avatar-edit-btn" title="Change profile picture">
+                        <i class="fa-solid fa-camera"></i>
+                    </label>
+
+                </div>
+
+                <input
+                    type="file"
+                    id="avatar-upload"
+                    name="profile_pic"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    hidden>
+
+                <div class="profile-name-section">
+                    <h1>{{ user.get('username', 'User') }}</h1>
+                    <p>
+                        <i class="fa-solid fa-circle online-icon"></i>
+                        Online
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- Profile Information -->
+            <div class="profile-info">
+
+                <div class="profile-section-heading">
+                    <div>
+                        <h2>Personal Information</h2>
+                        <p>Manage your ChatSphere profile information.</p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="edit-profile-btn">
+                        <i class="fa-solid fa-pen"></i>
+                        Edit Profile
+                    </button>
+                </div>
+
+
+                <!-- View Mode -->
+                <div class="profile-details" id="profile-view-mode">
+
+                    <div class="profile-detail-item">
+                        <div class="detail-icon">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+
+                        <div class="detail-content">
+                            <span class="detail-label">Username</span>
+                            <strong>{{ user.get('username', 'Not available') }}</strong>
+                        </div>
+                    </div>
+
+
+                    <div class="profile-detail-item">
+                        <div class="detail-icon">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+
+                        <div class="detail-content">
+                            <span class="detail-label">Email</span>
+                            <strong>{{ user.get('email', 'Not provided') }}</strong>
+                        </div>
+                    </div>
+
+
+                    <div class="profile-detail-item">
+                        <div class="detail-icon">
+                            <i class="fa-solid fa-calendar"></i>
+                        </div>
+
+                        <div class="detail-content">
+                            <span class="detail-label">Date of Birth</span>
+
+                            <strong id="dob-display">
+                                {{ user.get('dob', 'Not provided') }}
+                            </strong>
+
+                            <small id="age-display"></small>
+                        </div>
+                    </div>
+
+
+                    <div class="profile-detail-item">
+                        <div class="detail-icon">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+
+                        <div class="detail-content">
+                            <span class="detail-label">Member Since</span>
+
+                            <strong>
+                                {{ user.get('created_at', 'Recently') }}
+                            </strong>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- Edit Mode -->
+                <form
+                    method="POST"
+                    action="{{ url_for('profile') }}"
+                    enctype="multipart/form-data"
+                    class="profile-edit-form"
+                    id="profile-edit-mode"
+                    style="display:none;">
+
+                    <div class="form-group">
+                        <label for="edit-username">
+                            <i class="fa-solid fa-user"></i>
+                            Username
+                        </label>
+
+                        <input
+                            type="text"
+                            id="edit-username"
+                            name="username"
+                            class="form-control"
+                            value="{{ user.get('username', '') }}"
+                            minlength="3"
+                            maxlength="20"
+                            required>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="edit-email">
+                            <i class="fa-solid fa-envelope"></i>
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="edit-email"
+                            name="email"
+                            class="form-control"
+                            value="{{ user.get('email', '') }}"
+                            placeholder="Enter your email">
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="edit-dob">
+                            <i class="fa-solid fa-calendar"></i>
+                            Date of Birth
+                        </label>
+
+                        <input
+                            type="date"
+                            id="edit-dob"
+                            name="dob"
+                            class="form-control"
+                            value="{{ user.get('dob', '') }}">
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="edit-profile-pic">
+                            <i class="fa-solid fa-image"></i>
+                            Profile Picture
+                        </label>
+
+                        <input
+                            type="file"
+                            id="edit-profile-pic"
+                            name="profile_pic"
+                            class="form-control"
+                            accept="image/png,image/jpeg,image/jpg,image/webp">
+                    </div>
+
+
+                    <div class="edit-actions">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="cancel-edit-btn">
+                            <i class="fa-solid fa-xmark"></i>
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary">
+                            <i class="fa-solid fa-check"></i>
+                            Save Changes
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+            <!-- Security Section -->
+            <div class="profile-security">
+
+                <div class="security-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+
+                <div class="security-text">
+                    <h3>Your account is protected</h3>
+                    <p>
+                        ChatSphere uses secure password hashing to protect
+                        your account information.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const editButton = document.getElementById('edit-profile-btn');
+    const cancelButton = document.getElementById('cancel-edit-btn');
+
+    const viewMode = document.getElementById('profile-view-mode');
+    const editMode = document.getElementById('profile-edit-mode');
+
+    /*
+     * Edit Profile
+     */
+    if (editButton && viewMode && editMode) {
+
+        editButton.addEventListener('click', () => {
+
+            viewMode.style.display = 'none';
+            editMode.style.display = 'flex';
+
+            editButton.style.display = 'none';
+
+        });
+
+    }
+
+
+    /*
+     * Cancel Edit
+     */
+    if (cancelButton && viewMode && editMode) {
+
+        cancelButton.addEventListener('click', () => {
+
+            editMode.style.display = 'none';
+            viewMode.style.display = 'grid';
+
+            if (editButton) {
+                editButton.style.display = 'inline-flex';
+            }
+
+        });
+
+    }
+
+
+    /*
+     * Calculate Age
+     */
+    const dobDisplay = document.getElementById('dob-display');
+    const ageDisplay = document.getElementById('age-display');
+
+    if (dobDisplay && ageDisplay) {
+
+        const dobValue = dobDisplay.textContent.trim();
+
+        if (dobValue && dobValue !== 'Not provided') {
+
+            const dob = new Date(dobValue);
+
+            if (!isNaN(dob.getTime())) {
+
+                const today = new Date();
+
+                let age = today.getFullYear() - dob.getFullYear();
+
+                const monthDifference =
+                    today.getMonth() - dob.getMonth();
+
+                if (
+                    monthDifference < 0 ||
+                    (
+                        monthDifference === 0 &&
+                        today.getDate() < dob.getDate()
+                    )
+                ) {
+                    age--;
+                }
+
+                if (age >= 0) {
+                    ageDisplay.textContent = `${age} years old`;
+                }
+
+            }
+
+        }
+
+    }
+
+
+    /*
+     * Preview Profile Picture
+     */
+    const avatarUpload = document.getElementById('avatar-upload');
+    const avatar = document.getElementById('profile-avatar');
+
+    if (avatarUpload && avatar) {
+
+        avatarUpload.addEventListener('change', (event) => {
+
+            const file = event.target.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                avatarUpload.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+
+                if (avatar.tagName === 'IMG') {
+
+                    avatar.src = e.target.result;
+
+                } else {
+
+                    const image = document.createElement('img');
+
+                    image.src = e.target.result;
+                    image.alt = 'Profile Picture';
+                    image.className = 'profile-avatar';
+                    image.id = 'profile-avatar';
+
+                    avatar.replaceWith(image);
+
+                }
+
+            };
+
+            reader.readAsDataURL(file);
+
+        });
+
+    }
+
+});
+</script>
+
+{% endblock %}
